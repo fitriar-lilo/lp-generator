@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cambridge Mathematics Lesson Plan Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+<script>
+  /* MathJax 3, tex-svg output. fontCache "local" keeps every formula a self-contained SVG (needed for PDF/DOCX capture). */
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$']], processEscapes: true },
+    svg: { fontCache: 'local' },
+    options: { enableMenu: false, enableAssistiveMml: false },
+    startup: { typeset: false }
+  };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.js"
+        onerror="var s=document.createElement('script');s.src='https://unpkg.com/docx@8.5.0/build/index.js';document.head.appendChild(s);"></script>
+<style>
+:root{--c1:#1f4e9c;--c2:#2aa1b8;--ht:#fff;--tint:#e8eef8;--bd:#8d99ab;--ff:'Times New Roman',Times,serif;--fs:11pt;
+  --ui:#1b2433;--ui2:#5a667a;--line:#d6dce6;--bg:#eef1f6;--accent:#1f4e9c}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;color:var(--ui);background:var(--bg);font-size:14px}
+.app-head{background:linear-gradient(90deg,var(--c1),var(--c2));color:var(--ht);padding:12px 20px}
+.app-head h1{margin:0;font-size:20px}.app-head p{margin:2px 0 0;font-size:13px;opacity:.9}
+.layout{display:grid;grid-template-columns:minmax(340px,440px) 1fr;gap:16px;padding:16px;align-items:start}
+.panel{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;max-height:calc(100vh - 32px);overflow:auto;position:sticky;top:16px}
+fieldset{border:1px solid var(--line);border-radius:8px;margin:0 0 12px;padding:10px 12px 12px}
+legend{font-weight:700;padding:0 6px;color:var(--accent)}
+label{display:block;font-size:13px;margin:8px 0 3px;font-weight:600}
+input[type=text],input[type=url],input[type=date],select,textarea{width:100%;padding:7px 8px;border:1px solid #b9c2d1;border-radius:6px;font:inherit;background:#fff}
+input[type=color]{width:56px;height:34px;padding:2px;border:1px solid #b9c2d1;border-radius:6px;background:#fff}
+input[aria-invalid=true],select[aria-invalid=true]{border-color:#c0392b;background:#fff6f5}
+:focus-visible{outline:3px solid #f5a623;outline-offset:1px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.hint{font-size:12px;color:var(--ui2);margin:4px 0}
+button{font:inherit;cursor:pointer;border:1px solid var(--accent);background:#fff;color:var(--accent);padding:7px 12px;border-radius:7px;font-weight:600}
+button.primary{background:var(--accent);color:#fff}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.x{padding:0 7px;border-color:#c0392b;color:#c0392b;font-size:14px;line-height:20px}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.sigprev{display:flex;gap:6px;align-items:center;margin-top:4px}
+.sigprev img{max-height:46px;max-width:100%;border:1px dashed #b9c2d1;background:#fafbfd}
+.gradprev{height:26px;border-radius:6px;margin-top:8px;border:1px solid var(--line)}
+.reslist{list-style:none;margin:6px 0 0;padding:0;font-size:12.5px}
+.reslist li{display:flex;justify-content:space-between;gap:6px;align-items:center;padding:3px 6px;background:#f4f6fa;border-radius:5px;margin-bottom:3px;word-break:break-all}
+#checklist{max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:8px;background:#fcfdff}
+.chk{display:flex;gap:7px;align-items:flex-start;font-weight:400;margin:3px 0;font-size:13px}
+.chk input{margin-top:3px}
+.topic{border-top:1px solid #e6eaf1;padding-top:4px;margin-top:4px}
+.subs{margin-left:20px}.objs{margin-left:22px;padding-left:8px;border-left:3px solid #d9e3f5}
+.objs code{background:#eef2fa;padding:0 4px;border-radius:3px;font-size:11.5px}
+.trow{display:flex;justify-content:space-between;align-items:center}
+details{margin-top:8px}summary{cursor:pointer;font-weight:600;color:var(--accent)}
+#errors{display:none;background:#fdecea;border:1px solid #e6a49c;color:#7d1f14;padding:8px 12px;border-radius:8px;margin-bottom:10px}
+#errors ul{margin:4px 0 0 18px;padding:0}
+#status{font-size:12.5px;color:var(--ui2);margin-top:8px;min-height:18px}
+.preview{min-width:0;overflow-x:auto}
+.preview-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:13px;color:var(--ui2)}
+#docWrap{width:210mm;background:#fff;padding:15mm;box-shadow:0 2px 14px rgba(20,30,50,.25);margin:0 auto;min-height:100mm}
+#doc{width:180mm;font-family:var(--ff);font-size:var(--fs);line-height:1.15;color:#111}
+#empty{color:var(--ui2);text-align:center;padding:40px 10px;font-family:system-ui,sans-serif}
+/* ---------- document tables ---------- */
+table.lp{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;border-top:1px solid var(--bd);border-left:1px solid var(--bd);margin:0 0 calc(2.3 * var(--fs))}
+#doc>:last-child{margin-bottom:0}
+table.lp td,table.lp th{border-right:1px solid var(--bd);border-bottom:1px solid var(--bd);padding:3px 5px;vertical-align:top;text-align:left;overflow-wrap:anywhere;white-space:pre-wrap;font-weight:400}
+table.lp th{font-weight:700}
+table.lp th.bar{font-size:calc(var(--fs) * 1.08)}
+table.lp .grad{background-image:linear-gradient(90deg,var(--c1),var(--c2));background-repeat:no-repeat;color:var(--ht)}
+table.lp tr.colhead th{border-top:1px solid rgba(255,255,255,.55)}
+table.lp td.lab{background:var(--tint);font-weight:700}
+table.lp td[contenteditable]:focus,table.lp th[contenteditable]:focus{outline:2px solid #f5a623;outline-offset:-2px}
+table.lp td.ruled{line-height:2em;min-height:18em;height:18em;background-image:linear-gradient(to bottom,transparent calc(2em - 1px),#9fb0c7 1px);background-size:100% 2em}
+table.lp td.sig{height:22mm;text-align:center;vertical-align:middle}
+table.lp td.sig img{max-height:20mm;max-width:100%}
+table.lp td.sig .ph{color:#a6afbd;font-size:.85em}
+.hdrimg{margin:0 0 calc(2.3 * var(--fs))}
+.hdrimg img{display:block;width:100%;max-height:40mm;object-fit:contain}
+mjx-container{white-space:nowrap}
+.pbmark{display:none}
+/* ---------- responsive ---------- */
+@media (max-width:980px){.layout{grid-template-columns:1fr}.panel{position:static;max-height:none}}
+/* ---------- print ---------- */
+@page{size:A4 portrait;margin:1.5cm}
+@media print{
+  html,body{background:#fff}
+  .app-head,.panel,.preview-head,#empty{display:none!important}
+  .layout{display:block;padding:0}
+  .preview{overflow:visible}
+  #docWrap{width:auto;padding:0;box-shadow:none;margin:0;min-height:0}
+  #doc{width:auto}
+  table.lp{break-inside:auto}
+  table.lp.keep{break-inside:avoid}
+  table.lp.pb{break-before:page}
+  thead{display:table-header-group}
+  tr,td,th{break-inside:avoid}
+  tbody tr:nth-child(-n+2){break-after:avoid}
+  thead tr{break-after:avoid}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<header class="app-head">
+  <h1>Cambridge Mathematics Lesson Plan Generator</h1>
+  <p>IGCSE · AS Level · A Level — fill in the form, tick the content, press Generate, edit on screen, then export.</p>
+</header>
+
+<main class="layout">
+<section class="panel" aria-label="Lesson plan form">
+  <div id="errors" role="alert" aria-live="assertive"></div>
+
+  <fieldset><legend>1. Teacher and school</legend>
+    <label for="teacher">Teacher name *</label><input type="text" id="teacher" autocomplete="name">
+    <div class="row2">
+      <div><label for="hod">Head of Department name *</label><input type="text" id="hod"></div>
+      <div><label for="principal">Principal name *</label><input type="text" id="principal"></div>
+    </div>
+    <div class="row3">
+      <div><label for="tsig">Teacher signature</label><input type="file" id="tsig" accept="image/*" data-img="tsig"><div class="sigprev" id="prev-tsig"></div></div>
+      <div><label for="hsig">HOD signature</label><input type="file" id="hsig" accept="image/*" data-img="hsig"><div class="sigprev" id="prev-hsig"></div></div>
+      <div><label for="psig">Principal signature</label><input type="file" id="psig" accept="image/*" data-img="psig"><div class="sigprev" id="prev-psig"></div></div>
+    </div>
+    <label for="hdr">Lesson plan header image</label><input type="file" id="hdr" accept="image/*" data-img="hdr"><div class="sigprev" id="prev-hdr"></div>
+    <div class="row2">
+      <div><label for="hodDate">HOD approval date</label><input type="date" id="hodDate"></div>
+      <div><label for="prDate">Principal approval date</label><input type="date" id="prDate"></div>
+    </div>
+  </fieldset>
+
+  <fieldset><legend>2. Lesson set-up</legend>
+    <label for="level">Level *</label>
+    <select id="level"><option value="IGCSE">IGCSE</option><option value="AS">AS Level</option><option value="A">A Level</option></select>
+    <div class="row2">
+      <div><label for="duration">Lesson duration *</label><select id="duration"><option value="40">40 minutes</option><option value="60">60 minutes</option><option value="80" selected>80 minutes</option></select></div>
+      <div><label for="meetings">Number of meetings *</label><select id="meetings"></select></div>
+    </div>
+    <label for="date">Date or date range *</label>
+    <input type="text" id="date" placeholder="dd/mm/yyyy  or  dd/mm/yyyy to dd/mm/yyyy" autocomplete="off">
+    <p class="hint">Range: meetings are spread over the weekdays in the range. Single date: following meetings use the next weekdays. Every date can be edited in the plan.</p>
+    <details><summary>Additional header details</summary>
+      <div class="row2">
+        <div><label for="year">Year group</label><input type="text" id="year"></div>
+        <div><label for="dept">Department</label><input type="text" id="dept" value="Mathematics"></div>
+      </div>
+      <label for="syllabus">Syllabus</label><input type="text" id="syllabus">
+      <label for="aos">Cambridge AOs</label><textarea id="aos" rows="3"></textarea>
+      <label for="footer">Footer text (every page)</label><input type="text" id="footer" value="SEMESTA SCHOOL | Cambridge Mathematics Lesson Plan">
+    </details>
+  </fieldset>
+
+  <fieldset><legend>3. Content (Topic → Subtopic → Objective)</legend>
+    <div id="checklist" role="group" aria-label="Topic checklist"></div>
+    <p class="hint" id="selSummary"></p>
+    <details><summary>Add my own topic, subtopic or objective</summary>
+      <label for="newTopic">New topic name</label>
+      <div class="row2"><input type="text" id="newTopic" placeholder="e.g. Differentiation"><button type="button" id="addTopic">Add topic</button></div>
+      <label for="subTopicSel">New subtopic — in topic</label><select id="subTopicSel"></select>
+      <input type="text" id="newSub" placeholder="Subtopic name" aria-label="Subtopic name" style="margin-top:4px">
+      <input type="text" id="newSubF" placeholder="Key formula in LaTeX (optional), e.g. \frac{dy}{dx}=nx^{n-1}" aria-label="Key formula" style="margin-top:4px">
+      <input type="text" id="newSubQ" placeholder="Sample question (optional, use $…$ for maths)" aria-label="Sample question" style="margin-top:4px">
+      <button type="button" id="addSub" style="margin-top:4px">Add subtopic</button>
+      <label for="objSubSel">New objective — in subtopic</label><select id="objSubSel"></select>
+      <div class="row2" style="margin-top:4px"><input type="text" id="newObjCode" placeholder="Code (e.g. 1.2)" aria-label="Objective code"><input type="text" id="newObjText" placeholder="Objective text" aria-label="Objective text"></div>
+      <button type="button" id="addObj" style="margin-top:4px">Add objective</button>
+    </details>
+  </fieldset>
+
+  <fieldset><legend>4. Resources</legend>
+    <label for="trFile">Teacher resources — upload files</label><input type="file" id="trFile" multiple>
+    <div class="row2" style="margin-top:4px"><input type="url" id="trLink" placeholder="https://… paste a link" aria-label="Teacher resource link"><button type="button" id="trAdd">Add link</button></div>
+    <ul class="reslist" id="trList"></ul>
+    <label for="saFile">Students' activities — upload files</label><input type="file" id="saFile" multiple>
+    <div class="row2" style="margin-top:4px"><input type="url" id="saLink" placeholder="https://… paste a link" aria-label="Student activity link"><button type="button" id="saAdd">Add link</button></div>
+    <ul class="reslist" id="saList"></ul>
+    <label for="other">Other resources (one per line)</label><textarea id="other" rows="3"></textarea>
+  </fieldset>
+
+  <fieldset><legend>5. Appearance</legend>
+    <div class="row3">
+      <div><label for="c1">Header start</label><input type="color" id="c1" value="#1f4e9c"></div>
+      <div><label for="c2">Header end</label><input type="color" id="c2" value="#2aa1b8"></div>
+    </div>
+    <div class="gradprev" id="gradprev" aria-label="Header colour preview"></div>
+    <div class="row2">
+      <div><label for="font">Font family</label>
+        <select id="font"><option>Times New Roman</option><option>Arial</option><option>Calibri</option><option>Nunito</option><option>Georgia</option><option>Cambria</option></select></div>
+      <div><label for="size">Font size</label>
+        <select id="size"><option>10</option><option selected>11</option><option>12</option><option>13</option><option>14</option></select></div>
+    </div>
+  </fieldset>
+
+  <div class="actions">
+    <button type="button" class="primary" id="btnGen">Generate</button>
+    <button type="button" id="btnPdf" disabled>Download PDF</button>
+    <button type="button" id="btnDocx" disabled>Download DOCX</button>
+    <button type="button" id="btnPrint" disabled>Print</button>
+  </div>
+  <div id="status" role="status" aria-live="polite"></div>
+</section>
+
+<section class="preview" aria-label="Lesson plan preview">
+  <div class="preview-head"><span id="pageInfo">Preview — A4 portrait, margins 1.5 cm. Click any text to edit; formulas use LaTeX in $…$.</span></div>
+  <div id="docWrap"><div id="empty">Your lesson plan will appear here after you press <b>Generate</b>.</div><div id="doc"></div></div>
+</section>
+</main>
+
+<script>
+'use strict';
+/* =====================================================================
+   DATA — edit here to add or change topics. Structure:
+   DATA[level].topics = [{id, name, kw:[key terms], subs:[{id, name, f:'LaTeX key formula', q:'sample question',
+        objs:[{uid, code, text}]}]}]
+   ===================================================================== */
+const T = (id, name, kw, subs) => ({ id: String(id), name, kw,
+  subs: subs.map(([sid, sname, objs, f, q]) => ({ id: sid, name: sname, f, q,
+    objs: objs.map(([code, text], i) => ({ uid: sid + '#' + i, code, text })) })) });
+
+const DATA = {
+  IGCSE: { short: 'IGCSE Mathematics', code: '0580', syllabus: 'Cambridge IGCSE Mathematics 0580', year: 'Year 10',
+    aos: 'AO1: Demonstrate knowledge and understanding of mathematical techniques. AO2: Reason, interpret and communicate mathematically when solving problems.',
+    textbook: 'Cambridge IGCSE Mathematics Course Book (0580)',
+    topics: [
+    T(14, 'Further solving of equations and inequalities', ['elimination', 'substitution', 'inequality', 'boundary line', 'completing the square', 'quadratic formula', 'algebraic fraction'], [
+      ['14.1', 'Simultaneous linear equations', [['C2.5, E2.5', 'Solve simultaneous linear equations in two unknowns.']], 'ax+by=c,\\quad dx+ey=f', 'Solve $3x+2y=16$ and $x-y=2$.'],
+      ['14.2', 'Linear inequalities', [['C2.6, E2.6', 'Represent and interpret inequalities, including on a number line.']], 'ax+b<c\\;\\Rightarrow\\;x<\\frac{c-b}{a}\\;(a>0)', 'Solve $3x-5\\le 7$ and show the solution on a number line.'],
+      ['14.3', 'Regions in the plane', [['E2.6', 'Represent and interpret inequalities (implied for regions in the plane).']], 'y\\ge mx+c', 'Shade the region satisfying $y\\le 2x+1$, $y>-1$ and $x\\le 3$ and label it $R$.'],
+      ['14.4', 'Completing the square', [['E2.3', 'Solve quadratic equations by completing the square.']], 'x^2+bx+c=\\left(x+\\tfrac{b}{2}\\right)^2-\\tfrac{b^2}{4}+c', 'Solve $x^2+6x-7=0$ by completing the square.'],
+      ['14.5', 'Quadratic formula', [['E2.3', 'Solve quadratic equations using the quadratic formula.']], 'x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}', 'Solve $3x^2-7x+1=0$, giving answers correct to 2 decimal places.'],
+      ['14.6', 'Factorising quadratics where the coefficient of x² is not 1', [['E2.2', 'Factorise algebraic expressions.']], 'ax^2+bx+c=(px+q)(rx+s),\\; pr=a,\\; qs=c', 'Factorise $6x^2+7x-3$.'],
+      ['14.7', 'Algebraic fractions', [['E2.2', 'Simplify algebraic fractions.']], '\\frac{x^2-9}{x^2+x-12}=\\frac{(x-3)(x+3)}{(x+4)(x-3)}', 'Simplify $\\dfrac{x^2-4}{x^2+5x+6}$.']]),
+    T(15, 'Scale drawings, bearings and trigonometry', ['scale factor', 'bearing', 'hypotenuse', 'opposite', 'adjacent', 'sine rule', 'cosine rule', 'angle of elevation'], [
+      ['15.1', 'Scale drawing', [['C4.3, E4.3', 'Draw and interpret scale drawings.']], '\\text{actual length}=n\\times\\text{drawing length}\\quad(\\text{scale }1:n)', 'A map has scale $1:50\\,000$. Find the actual distance in km for $6.4$ cm on the map.'],
+      ['15.2', 'Bearings', [['C4.3, E4.3', 'Draw and interpret scale drawings (bearings).']], '\\text{back bearing}=\\text{bearing}\\pm180^\\circ', 'The bearing of $B$ from $A$ is $072^\\circ$. Find the bearing of $A$ from $B$.'],
+      ['15.3', 'Understanding the tangent, cosine and sine ratios', [['C6.2, E6.2', 'Know and use the sine, cosine and tangent ratios for acute angles.']], '\\sin\\theta=\\frac{O}{H},\\;\\cos\\theta=\\frac{A}{H},\\;\\tan\\theta=\\frac{O}{A}', 'Find $x$ if $\\sin 35^\\circ=\\dfrac{x}{12}$.'],
+      ['15.4', 'Exact trigonometric ratios', [['E6.3', 'Know the exact values of sin x, cos x, tan x for specific angles.']], '\\sin30^\\circ=\\tfrac12,\\;\\cos45^\\circ=\\tfrac{\\sqrt2}{2},\\;\\tan60^\\circ=\\sqrt3', 'Without a calculator, find the exact value of $\\sin60^\\circ\\cos30^\\circ-\\tan45^\\circ$.'],
+      ['15.5', 'Solving problems using trigonometry', [['C6.2, E6.2', "Solve problems in two dimensions using Pythagoras' theorem and trigonometry."]], 'a^2+b^2=c^2', 'A 5 m ladder has its foot 1.4 m from a wall. Find the angle it makes with the ground.'],
+      ['15.6', 'Sines, cosines and tangents of angles more than 90°', [['E6.4', 'Recognise, sketch and interpret trigonometric graphs.']], '\\sin(180^\\circ-\\theta)=\\sin\\theta,\\;\\cos(180^\\circ-\\theta)=-\\cos\\theta', 'Solve $\\sin x=0.5$ for $0^\\circ\\le x\\le360^\\circ$.'],
+      ['15.7', 'The sine and cosine rules', [['E6.5', 'Use the sine and cosine rules in calculations involving lengths and angles for any triangle.']], '\\frac{a}{\\sin A}=\\frac{b}{\\sin B}=\\frac{c}{\\sin C},\\quad a^2=b^2+c^2-2bc\\cos A', 'In triangle $ABC$, $a=8$, $b=11$ and $C=62^\\circ$. Find $c$.'],
+      ['15.8', 'Area of a triangle', [['E6.5', 'Use the formula area of triangle = ½ab sin C.']], '\\text{Area}=\\tfrac12ab\\sin C', 'Find the area of a triangle with sides 9 cm and 12 cm enclosing an angle of $40^\\circ$.'],
+      ['15.9', 'Trigonometry in three dimensions', [['E6.6', 'Carry out calculations and solve problems in three dimensions using trigonometry.']], '\\tan\\theta=\\frac{\\text{height}}{\\text{horizontal distance}}', 'Cuboid $ABCDEFGH$ has $AB=8$, $BC=6$ and $CG=5$. Calculate angle $GAC$.']]),
+    T(16, 'Scatter diagrams and correlation', ['scatter diagram', 'correlation', 'line of best fit', 'outlier', 'bivariate data'], [
+      ['16.1', 'Introduction to bivariate data', [['C9.5, E9.5', 'Draw and interpret scatter diagrams; understand positive, negative and zero correlation.']], 'y=mx+c\\;\\text{(line of best fit)}', 'Plot the data, describe the correlation and draw a line of best fit to estimate $y$ when $x=15$.']]),
+    T(17, 'Managing money', ['gross pay', 'simple interest', 'compound interest', 'principal', 'percentage change', 'profit and loss'], [
+      ['17.1', 'Earning money', [['C1.16, E1.16', 'Calculate with money.']], '\\text{net pay}=\\text{gross pay}-\\text{deductions}', 'Sara earns USD 12.50 per hour and USD 18.75 per overtime hour. Find her pay for 35 normal hours and 6 overtime hours.'],
+      ['17.2', 'Borrowing and investing money', [['C1.13, E1.13', 'Calculate with simple and compound interest.']], 'I=\\frac{PRT}{100},\\quad A=P\\left(1+\\frac{r}{100}\\right)^n', 'Find the compound interest on USD 5000 at $4\\%$ per year for 3 years.'],
+      ['17.3', 'Buying and selling', [['C1.13, E1.13', 'Calculate percentage increase or decrease.'], ['C1.16, E1.16', 'Calculate with money.']], '\\text{percentage change}=\\frac{\\text{new}-\\text{original}}{\\text{original}}\\times100', 'A jacket costing USD 80 is reduced to USD 62. Find the percentage reduction.']]),
+    T(18, 'Curved graphs', ['parabola', 'hyperbola', 'tangent', 'gradient', 'derivative', 'intersection', 'root'], [
+      ['18.1', 'Review of quadratic graphs (parabola)', [['C2.10, E2.10', 'Draw, recognise and interpret graphs for quadratic functions.']], 'y=ax^2+bx+c,\\quad x=-\\frac{b}{2a}', 'Draw $y=x^2-4x+1$ for $-1\\le x\\le5$ and state its line of symmetry.'],
+      ['18.2', 'Drawing reciprocal graphs (the hyperbola)', [['C2.10, E2.10', 'Draw, recognise and interpret graphs for reciprocal functions.']], 'y=\\frac{k}{x}', 'Draw $y=\\dfrac{6}{x}$ for $-6\\le x\\le6$, $x\\ne0$.'],
+      ['18.3', 'Using graphs to solve quadratic equations', [['C2.10, E2.10', 'Solve associated equations graphically.']], 'ax^2+bx+c=0\\;\\Leftrightarrow\\;\\text{graph meets }y=0', 'Use the graph of $y=x^2-2x-3$ to solve $x^2-2x-3=0$ and $x^2-2x-3=2$.'],
+      ['18.4', 'Simultaneous linear and non-linear equations', [['E2.10', 'Solve associated equations graphically, including finding and interpreting roots.']], 'y=mx+c\\;\\text{and}\\;y=ax^2+bx+c', 'Find where $y=x^2-3$ and $y=x-1$ intersect.'],
+      ['18.5', 'Other non-linear graphs', [['E2.10', 'Draw, recognise and interpret graphs for other non-linear functions.']], 'y=ax^3+bx^2+cx+d,\\quad y=\\frac{a}{x^2},\\quad y=2^x', 'Draw $y=x^3-3x$ for $-2\\le x\\le2$ and find where it crosses $y=1$.'],
+      ['18.6', 'Finding the gradient of a curve', [['E2.12', 'Estimate gradients of curves by drawing tangents.']], '\\text{gradient}=\\frac{\\Delta y}{\\Delta x}', 'Draw a tangent to $y=x^2$ at $x=2$ and estimate its gradient.'],
+      ['18.7', 'Derivatives of functions', [['E2.12', 'Use the derivatives of functions of the form ax^n.']], '\\frac{d}{dx}\\left(ax^n\\right)=anx^{n-1}', 'Differentiate $y=4x^3-5x^2+7$ and find the gradient at $x=2$.']]),
+    T(19, 'Symmetry', ['line symmetry', 'rotational symmetry', 'plane of symmetry', 'chord', 'tangent', 'arc', 'subtended angle'], [
+      ['19.1', 'Symmetry in two dimensions', [['C4.5, E4.5', 'Recognise line symmetry and order of rotational symmetry in two dimensions.']], '\\text{angle of rotation}=\\frac{360^\\circ}{n}', 'State the number of lines of symmetry and the order of rotational symmetry of a regular hexagon.'],
+      ['19.2', 'Symmetry in three dimensions', [['E4.5', 'Recognise symmetry properties of prisms, cylinders, pyramids and cones.']], '\\text{plane of symmetry: mirror image of the solid}', 'State the number of planes of symmetry of a square-based pyramid.'],
+      ['19.3', 'Symmetry properties of circles', [['E4.8', 'Use symmetry properties of circles.']], '\\text{tangent}\\perp\\text{radius}', 'Tangents from $P$ touch a circle at $A$ and $B$. Show that $PA=PB$.'],
+      ['19.4', 'Angle relationships in circles', [['C4.7, E4.7', 'Calculate unknown angles using circle theorems.']], '\\angle_{\\text{centre}}=2\\times\\angle_{\\text{circumference}}', 'Points $A$, $B$, $C$ lie on a circle, centre $O$, with $\\angle AOB=110^\\circ$. Find $\\angle ACB$.']]),
+    T(20, 'Histograms and cumulative frequency diagrams', ['histogram', 'frequency density', 'class width', 'cumulative frequency', 'median', 'quartile'], [
+      ['20.1', 'Histogram', [['E9.7', 'Draw and interpret histograms.']], '\\text{frequency density}=\\frac{\\text{frequency}}{\\text{class width}}', 'Complete the histogram for the table of unequal class widths and find the frequency for $20<x\\le30$.'],
+      ['20.2', 'Cumulative frequency', [['E9.6', 'Draw and interpret cumulative frequency tables and diagrams.']], 'Q_1\\approx\\tfrac14n,\\; Q_2\\approx\\tfrac12n,\\; Q_3\\approx\\tfrac34n', 'Draw a cumulative frequency curve and estimate the median and interquartile range.']]),
+    T(21, 'Ratio, rate and proportion', ['ratio', 'proportion', 'rate', 'speed', 'acceleration', 'direct proportion', 'inverse proportion'], [
+      ['21.1', 'Working with ratios', [['C1.11, E1.11', 'Understand and use ratio and proportion.']], 'a:b=ka:kb', 'Share USD 840 in the ratio $3:4:5$.'],
+      ['21.2', 'Ratio and scales', [['C1.11, E1.11', 'Use proportional reasoning and ratios in context.']], '\\text{actual}=\\text{scale factor}\\times\\text{model}', 'A model car is built to scale $1:24$. The car is 4.8 m long. Find the model length in cm.'],
+      ['21.3', 'Rates', [['C1.12, E1.12', 'Use common measures of rate.']], '\\text{speed}=\\frac{\\text{distance}}{\\text{time}},\\quad \\text{density}=\\frac{m}{V}', 'A car travels 150 km in 1 hour 40 minutes. Find its average speed in km/h.'],
+      ['21.4', 'Kinematic graphs', [['E2.9', 'Apply the idea of rate of change to simple kinematics.']], '\\text{acceleration}=\\text{gradient of }v\\text{–}t\\text{ graph}', 'Use the speed–time graph to find the acceleration in the first 8 s and the total distance travelled.'],
+      ['21.5', 'Proportions', [['C1.11, E1.11', 'Use proportional reasoning.']], '\\frac{a}{b}=\\frac{c}{d}\\;\\Rightarrow\\;ad=bc', '5 workers build a wall in 12 days. How long would 8 workers take?'],
+      ['21.6', 'Direct and inverse proportions in algebraic terms', [['E2.8', 'Express direct and inverse proportion in algebraic terms.']], 'y=kx\\;(\\text{direct}),\\quad y=\\frac{k}{x}\\;(\\text{inverse})', '$y$ is inversely proportional to $x^2$. When $x=2$, $y=9$. Find $y$ when $x=6$.']]),
+    T(22, 'More equations, formulae and functions', ['formula', 'subject', 'function', 'domain', 'range', 'inverse function', 'composite function'], [
+      ['22.1', 'Setting up equations to solve problems', [['C2.5, E2.5', 'Construct simple expressions, equations and formulas.']], 'ax+b=c\\;\\Rightarrow\\;x=\\frac{c-b}{a}', 'A rectangle has perimeter 46 cm and length 5 cm more than its width. Form and solve an equation to find the width.'],
+      ['22.2', 'Using and transforming formulae', [['C2.5, E2.5', 'Change the subject of simple formulas.']], 'v=u+at\\;\\Rightarrow\\;t=\\frac{v-u}{a}', 'Make $r$ the subject of $A=\\pi r^2$.'],
+      ['22.3', 'Functions and function notation', [['E2.13', 'Understand functions, domain and range and use function notation.']], 'f:x\\mapsto y,\\quad fg(x)=f(g(x))', 'Given $f(x)=2x+3$ and $g(x)=x^2$, find $fg(x)$ and $f^{-1}(x)$.']]),
+    T(23, 'Transformations and vectors', ['reflection', 'rotation', 'translation', 'enlargement', 'vector', 'magnitude', 'column vector'], [
+      ['23.1', 'Simple plane transformations', [['C7.1, E7.1', 'Recognise, describe and draw transformations.']], '\\text{translation }\\begin{pmatrix}a\\\\b\\end{pmatrix}:\\;(x,y)\\to(x+a,\\,y+b)', 'Translate triangle $T$ by $\\begin{pmatrix}3\\\\-2\\end{pmatrix}$ and reflect the image in the $y$-axis.'],
+      ['23.2', 'Further transformations', [['E7.1', 'Recognise, describe and draw transformations with combinations.']], '\\overrightarrow{CP\'}=k\\,\\overrightarrow{CP}\\quad(\\text{enlargement, centre }C)', 'Triangle $T$ is reflected in $y=x$ and then enlarged by scale factor $2$, centre $(0,0)$. Draw the image.'],
+      ['23.3', 'Vectors', [['E7.2, E7.3, E7.4', 'Describe, add, subtract and multiply vectors; calculate magnitude; use vectors in geometric problems.']], '\\left|\\begin{pmatrix}a\\\\b\\end{pmatrix}\\right|=\\sqrt{a^2+b^2}', '$\\overrightarrow{OA}=\\begin{pmatrix}3\\\\4\\end{pmatrix}$ and $\\overrightarrow{OB}=\\begin{pmatrix}-1\\\\2\\end{pmatrix}$. Find $\\overrightarrow{AB}$ and $|\\overrightarrow{AB}|$.']]),
+    T(24, 'Probability using tree diagrams and Venn diagrams', ['tree diagram', 'outcome', 'independent events', 'conditional probability', 'Venn diagram', 'intersection'], [
+      ['24.1', 'Using tree diagrams to show outcomes', [['C8.3, E8.3', 'Calculate the probability of combined events using tree diagrams.']], 'P(A\\text{ and }B)=P(A)\\times P(B)', 'A bag has 3 red and 5 blue counters. Two are taken with replacement. Draw a tree diagram.'],
+      ['24.2', 'Calculating probability from tree diagrams', [['C8.3, E8.3', 'Calculate the probability of combined events using tree diagrams.']], 'P(A\\text{ then }B)=P(A)\\times P(B\\mid A)', 'Without replacement, find the probability that exactly one counter is red.'],
+      ['24.4', 'Conditional probability', [['E8.4', 'Calculate conditional probability using Venn diagrams, tree diagrams and tables.']], 'P(A\\mid B)=\\frac{P(A\\cap B)}{P(B)}', 'Given $n(A)=20$, $n(B)=15$, $n(A\\cap B)=6$ and $n(\\xi)=40$, find $P(A\\mid B)$.']])
+  ] },
+  AS: { short: 'AS Level Mathematics', code: '9709', syllabus: 'Cambridge International AS Level Mathematics 9709', year: 'Year 12',
+    aos: 'AO1: Knowledge and understanding of mathematical techniques. AO2: Application and communication.', textbook: 'Cambridge International AS & A Level Mathematics Course Book (9709)', topics: [] },
+  A: { short: 'A Level Mathematics', code: '9709', syllabus: 'Cambridge International A Level Mathematics 9709', year: 'Year 13',
+    aos: 'AO1: Knowledge and understanding of mathematical techniques. AO2: Application and communication.', textbook: 'Cambridge International AS & A Level Mathematics Course Book (9709)', topics: [] }
+};
+
+const FONTS = { 'Times New Roman': "'Times New Roman',Times,serif", Arial: 'Arial,Helvetica,sans-serif', Calibri: "Calibri,Carlito,'Segoe UI',sans-serif",
+  Nunito: "Nunito,'Segoe UI',sans-serif", Georgia: 'Georgia,serif', Cambria: 'Cambria,Caladea,serif' };
+
+/* ---------- 5E time tables: each row sums exactly to the lesson length ---------- */
+const PHASES = ['Engage', 'Explore', 'Explain', 'Elaborate', 'Evaluate'];
+const TIMES = { 40: [5, 10, 10, 10, 5], 60: [5, 15, 15, 15, 10], 80: [10, 20, 20, 20, 10] };
+
+/* ====================== small helpers (pure) ====================== */
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const lowerFirst = s => s ? s.charAt(0).toLowerCase() + s.slice(1) : s;
+const stripDot = s => String(s).replace(/\.\s*$/, '');
+const verbPhrase = o => lowerFirst(stripDot(o.text));
+const joinAnd = a => a.length <= 1 ? (a[0] || '') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+const pad2 = n => String(n).padStart(2, '0');
+const fmtDMY = d => pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) + '/' + d.getFullYear();
+function parseDMY(s) {
+  const m = String(s || '').trim().match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+  if (!m) return null;
+  const d = new Date(+m[3], +m[2] - 1, +m[1]);
+  return d.getFullYear() === +m[3] && d.getMonth() === +m[2] - 1 && d.getDate() === +m[1] ? d : null;
+}
+function parseDateInput(v) {
+  const parts = String(v || '').trim().split(/\s+(?:to|–|—|-)\s+/).filter(Boolean);
+  if (!parts.length || parts.length > 2) return null;
+  const a = parseDMY(parts[0]); const b = parts[1] ? parseDMY(parts[1]) : a;
+  if (!a || !b) return null;
+  return { start: a, end: b, range: parts.length === 2 };
+}
+const isWeekday = d => d.getDay() !== 0 && d.getDay() !== 6;
+function meetingDates(v, N) {
+  const p = parseDateInput(v); if (!p) return Array(N).fill('');
+  const out = [];
+  if (p.range) {
+    const days = []; for (let d = new Date(p.start); d <= p.end; d.setDate(d.getDate() + 1)) if (isWeekday(d)) days.push(new Date(d));
+    if (!days.length) days.push(p.start);
+    for (let i = 0; i < N; i++) out.push(fmtDMY(days[N === 1 ? 0 : Math.min(days.length - 1, Math.round(i * (days.length - 1) / (N - 1)))]));
+  } else {
+    const d = new Date(p.start); out.push(fmtDMY(d));
+    while (out.length < N) { do { d.setDate(d.getDate() + 1); } while (!isWeekday(d)); out.push(fmtDMY(d)); }
+  }
+  return out;
+}
+/* spread the chosen subtopics over N meetings */
+function distribute(items, N) {
+  const M = items.length, out = Array.from({ length: N }, () => []);
+  if (!M) return out;
+  if (M >= N) {
+    let idx = 0;
+    for (let m = 0; m < N; m++) { const size = Math.floor(M / N) + (m < M % N ? 1 : 0); for (let k = 0; k < size; k++) out[m].push({ item: items[idx++], k: 1, n: 1 }); }
+  } else {
+    const base = Math.floor(N / M), extra = N % M; let m = 0;
+    items.forEach((it, i) => { const n = base + (i < extra ? 1 : 0); for (let k = 1; k <= n; k++) out[m++].push({ item: it, k, n }); });
+  }
+  return out;
+}
+const stageOf = p => p.n === 1 ? 'full' : p.k === 1 ? 'intro' : p.k === p.n ? 'consolidate' : 'practise';
+const STAGE = {
+  full: { walt: '', explain: 'Model 2–3 worked examples (I do – We do – You do) and name the key results', elab: 'Apply the method to multi-step and real-context problems', evalName: 'Exit ticket' },
+  intro: { walt: 'build understanding of', explain: 'Introduce the idea with 2–3 worked examples (I do – We do – You do) and name the key results', elab: 'Practise routine questions of increasing difficulty', evalName: 'Exit ticket' },
+  practise: { walt: 'practise', explain: 'Recap the method and address misconceptions from the previous meeting', elab: 'Work through graded exam-style questions', evalName: 'Short quiz' },
+  consolidate: { walt: 'consolidate and apply', explain: 'Summarise key results and the most common errors', elab: 'Solve mixed, problem-solving and exam-style questions', evalName: 'Mini-assessment' }
+};
+
+/* ====================== plan model builders (pure) ====================== */
+const lab = v => ({ t: 'label', v });
+const tx = (v, span) => ({ t: 'text', v: v == null ? '' : String(v), span: span || 1 });
+const tbl = o => ({ kind: 'table', w: o.w, titleO: o.title ? { v: o.title } : null, head: o.head ? o.head.map(v => ({ v })) : null, rows: o.rows, newpage: !!o.newpage });
+
+function unitTitle(parts) {
+  const tops = [...new Map(parts.map(p => [p.item.topic.id, p.item.topic])).values()];
+  if (tops.length === 1) return `Unit ${tops[0].id}: ${tops[0].name}`;
+  const shown = tops.slice(0, 2).map(t => t.name).join('; ') + (tops.length > 2 ? ` (+${tops.length - 2} more)` : '');
+  return `Units ${tops.map(t => t.id).join(', ')}: ${shown}`;
+}
+function keyTerms(parts) {
+  const set = new Set();
+  parts.forEach(p => (p.item.topic.kw || []).forEach(k => set.add(k)));
+  if (!set.size) parts.forEach(p => set.add(lowerFirst(p.item.sub.name)));
+  return [...set].slice(0, 8).join(', ');
+}
+function resName(r) { return r.name; }
+
+function genMeeting(ctx, parts) {
+  const { P, L, N, D, m, dates, nextParts } = ctx, mi = m - 1;
+  const subs = parts.map(p => p.item.sub);
+  const names = joinAnd(subs.map(s => lowerFirst(s.name)));
+  const st = STAGE[stageOf(parts[0])];
+  const objs = []; parts.forEach(p => p.item.objs.forEach(o => objs.push({ o, sub: p.item.sub, stage: stageOf(p) })));
+  const durLabel = D === 80 ? '80 min (Double Period)' : D === 60 ? '60 min' : '40 min';
+  const tr = P.teacherRes, sa = P.studentAct;
+  const pick = (arr, i) => arr.length ? resName(arr[((i % arr.length) + arr.length) % arr.length]) : '';
+  const saA = pick(sa, mi * 2), saB = pick(sa, mi * 2 + 1), trA = pick(tr, mi);
+  const qs = subs.map(s => s.q).filter(Boolean);
+  const qExplore = qs[0] || `a ${names} problem of your choice`, qElab = qs[1] || qs[0] || `a multi-step ${names} problem`;
+  const fLines = subs.filter(s => s.f).map(s => `▶ ${s.name}: $\\displaystyle ${s.f}$`);
+  const T5 = TIMES[D];
+
+  /* --- 1. information table --- */
+  const info = tbl({ w: [20, 15, 25, 40], newpage: m > 1,
+    title: `${L.short} (${L.code}) ${unitTitle(parts)} | Lesson ${m} of ${N}`,
+    rows: [[lab('Year Group'), lab('Lesson'), lab('Duration'), lab('Date')],
+           [tx(P.year), tx(`${m} / ${N}`), tx(durLabel), tx(dates[mi])],
+           [lab('Teacher'), lab('Department'), lab('Syllabus'), lab('Cambridge AOs')],
+           [tx(P.teacher), tx(P.dept), tx(P.syllabus), tx(P.aos)]] });
+
+  /* --- 2. WALT / WILF / SLO --- */
+  const waltL = []; const seenStage = new Set();
+  objs.forEach(x => { if (x.stage !== 'full' && !seenStage.has(x.sub.id)) { seenStage.add(x.sub.id); waltL.push(`• ${STAGE[x.stage].walt} ${lowerFirst(x.sub.name)}`); } waltL.push(`• ${verbPhrase(x.o)}`); });
+  const wilfL = objs.map(x => `✔ I can ${verbPhrase(x.o)}.`);
+  subs.filter(s => s.f).slice(0, 3).forEach(s => wilfL.push(`✔ I can use $${s.f}$ accurately.`));
+  wilfL.push('✔ I can explain each step using correct mathematical language.');
+  const sloL = ['By the end of the lesson, the student will be able to:']
+    .concat(objs.map(x => `• ${verbPhrase(x.o)} [${x.o.code}]`))
+    .concat(['• apply the method to unfamiliar and exam-style questions', '• communicate reasoning clearly using correct notation and vocabulary', 'Schoolwide Learner Outcomes: critical thinker · effective communicator']);
+  const clil = `Language Objectives (CLIL): Key terms: ${keyTerms(parts)}. EAL students: bilingual vocabulary mat provided (English–Bahasa Indonesia).`;
+  const walt = tbl({ w: [33, 34, 33], head: ['WALT\nWe Are Learning To', "WILF\nWhat I'm Looking For", 'SLO\nStudent Learning Outcomes'],
+    rows: [[tx(waltL.join('\n')), tx(wilfL.join('\n')), tx(sloL.join('\n'))], [tx(clil, 3)]] });
+
+  /* --- 3. differentiation --- */
+  const diff = tbl({ w: [25, 25, 25, 25], title: 'Differentiation Provisions',
+    head: ['Support\nStruggling learners', 'Core\nOn-track learners', 'Extension\nHigh-achieving students', 'EAL and SEN\nAdditional learning needs'],
+    rows: [[
+      tx(`• Step-by-step worked-example frame for ${names}\n• Sentence starters and a formula/key-term card\n• Fewer steps and friendlier numbers; guided questioning`),
+      tx(`• Core task set on ${names} with the full method shown once\n• Peer explanation: partners compare methods\n• Check answers for reasonableness`),
+      tx(`• Open-ended extension: create an original question on ${names} with a mark scheme\n• Prove or generalise the key result\n• Unfamiliar exam-style problem-solving`),
+      tx(`• Bilingual vocabulary mat (English–Bahasa Indonesia)\n• Visual cues, colour-coded steps, chunked instructions\n• Extra time; follow individual support plans`)],
+      [tx(`Resource: tiered task cards (Support / Core / Extension)${saA ? '; ' + saA : ''} (teacher's desk)`, 4)]] });
+
+  /* --- 4. 5E lesson sequence --- */
+  const engage = `Teacher: Display the WALT and WILF. Run a 3-question retrieval starter on the prior knowledge needed for ${names}${trA ? ' (see: ' + trA + ')' : ''}. Show a short real-life scenario that needs ${names}.\nStudents: Answer on mini-whiteboards in pairs; share one idea with the class.\n▶ Think–pair–share: where might ${names} be useful?\n▶ Teacher scans whiteboards to judge readiness.`;
+  const explore = `Teacher: Pose the problem: ${qExplore} Circulate and prompt with "What is the first step?" and "How do you know?" without giving the method away.\nStudents: Investigate in groups of three${saA ? ' using "' + saA + '"' : ''}; record ideas on a shared sheet.\n▶ Groups compare strategies.\n▶ One group presents and the class questions it.`;
+  const explain = `Teacher: ${st.explain}.\nStudents: Annotate notes, ask and answer questions, and complete a "you do" example on mini-whiteboards.\n${fLines.length ? fLines.join('\n') + '\n' : ''}▶ Address misconceptions as they appear.\n▶ Hinge question before moving on.`;
+  const elaborate = `Teacher: ${st.elab}. Release students to tiered tasks (Support / Core / Extension) and conference with targeted students.\nStudents: Work on ${saB ? '"' + saB + '"' : 'the tiered task set'}; try: ${qElab}\n▶ Peer-check answers against the WILF.\n▶ Extension students write their own question.`;
+  const evaluate = `Teacher: ${st.evalName} on ${names}; recap the key results and link to the next meeting.\nStudents: Complete the ${lowerFirst(st.evalName)} individually and self-assess against the WILF (traffic lights).\n▶ Teacher collects responses to plan the next lesson.`;
+  const assess = ['Formative check 1: mini-whiteboard starter (prior knowledge).', 'Formative check 2: listen to group reasoning; prompt with questions.', 'Formative check 3: hinge question after the worked examples.', 'Formative check 4: tiered task; peer and self-assessment against WILF.', 'Formative check 5: exit ticket marked against the SLOs.'];
+  const acts = [engage, explore, explain, elaborate, evaluate];
+  const seq = tbl({ w: [12, 9, 53, 26], title: `Lesson Sequence — 5E Instructional Model (Meeting ${m}: ${D} minutes)`,
+    head: ['Phase', 'Time', 'Teacher and Student Activity', 'Assessment / SLO'],
+    rows: PHASES.map((ph, i) => [lab(ph), tx(`${T5[i]} min`), tx(acts[i]), tx(assess[i])]) });
+
+  /* --- 5. formative, homework, reflection --- */
+  const nextNames = nextParts && nextParts.length ? joinAnd(nextParts.map(p => lowerFirst(p.item.sub.name))) : '';
+  const fa = tbl({ w: [34, 33, 33], title: 'Formative Assessment, Homework, and Teacher Reflection',
+    head: ['Formative Assessment (in class)', 'Homework / Next Lesson (outside class)', 'Teacher Post-Lesson Reflection'],
+    rows: [[
+      tx(`• Mini-whiteboard checks (Engage, Explain)\n• Observation and questioning during group work (Explore)\n• ${st.evalName} on ${names} marked against the WILF`),
+      tx(`• Complete 6–8 graded questions on ${names}.\n${qs[0] ? '• Sample: ' + qs[0] + '\n' : ''}${nextNames ? '• Preview: ' + nextNames + '.' : '• Review the key results and correct any errors.'}`),
+      tx(`• What went well?\n• Which students need more support on ${names}?\n• What will I change next lesson?`)]] });
+
+  /* --- 6. teacher's own area --- */
+  const own = tbl({ w: [100], title: "Teacher's Own Learning Scenario / Materials / Sample Questions",
+    rows: [[{ t: 'lines', v: '', span: 1 }]] });
+  return [info, walt, diff, seq, fa, own];
+}
+
+function resourceTable(P, L) {
+  const rows = [];
+  if (L.textbook) rows.push([tx('Textbook'), tx(L.textbook), tx('Class set / library')]);
+  rows.push([tx('ASP/SEN'), tx('Individual Support Plans'), tx("Teacher's file")]);
+  P.teacherRes.forEach(r => rows.push([tx('Digital · Teacher resource'), tx(r.name), tx(r.kind === 'link' ? r.url : 'Uploaded file')]));
+  P.studentAct.forEach(r => rows.push([tx("Digital · Students' activity"), tx(r.name), tx(r.kind === 'link' ? r.url : 'Uploaded file')]));
+  String(P.otherRes || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean).forEach(s => rows.push([tx('Other'), tx(s), tx('Class / teacher')]));
+  return tbl({ w: [24, 43, 33], title: 'Resource List', head: ['Type', 'Resource Name', 'Location / Access'], rows });
+}
+function signatureTable(P, dates) {
+  const none = 'dd / mm / yyyy';
+  return tbl({ w: [33.3, 33.4, 33.3], head: ['Teacher', 'Head of Department (HOD)', 'Principal'],
+    rows: [[{ t: 'sig', key: 'tsig' }, { t: 'sig', key: 'hsig' }, { t: 'sig', key: 'psig' }],
+           [tx(P.teacher), tx(P.hod), tx(P.principal)],
+           [tx(`Submitted: ${dates[0] || none}`), tx(`Approval date: ${P.hodDate || none}`), tx(`Approval date: ${P.prDate || none}`)],
+           [tx(''), tx('HoD review: ☐ Approved  ☐ Feedback provided'), tx('Principal review: ☐ Approved  ☐ Feedback provided')]] });
+}
+function buildPlan(P) {
+  const L = DATA[P.level], N = P.N, D = P.D, dates = meetingDates(P.dateStr, N), groups = distribute(P.items, N), blocks = [];
+  if (P.hasHdr) blocks.push({ kind: 'hdrimg' });
+  groups.forEach((parts, mi) => { if (parts.length) blocks.push(...genMeeting({ P, L, N, D, m: mi + 1, dates, nextParts: groups[mi + 1] }, parts)); });
+  blocks.push(resourceTable(P, L)); blocks.push(signatureTable(P, dates));
+  return { blocks, P };
+}
+if (typeof module !== 'undefined') module.exports = { DATA, TIMES, PHASES, buildPlan, distribute, meetingDates, parseDateInput };
+
+/* =====================================================================
+   Everything below needs a browser.
+   ===================================================================== */
+if (typeof document !== 'undefined') (function () {
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const S = { level: 'IGCSE', sel: {}, teacherRes: [], studentAct: [], images: { tsig: '', hsig: '', psig: '', hdr: '' }, plan: null, font: 'Times New Roman', size: 11, c1: '#1f4e9c', c2: '#2aa1b8' };
+Object.keys(DATA).forEach(k => S.sel[k] = { t: new Set(), s: new Set(), o: new Set() });
+const PX_PER_MM = 96 / 25.4, PAGE_H = 267 * PX_PER_MM;
+const status = (m, err) => { const e = $('#status'); e.textContent = m; e.style.color = err ? '#b02a1c' : ''; };
+
+/* ---------------- colour helpers ---------------- */
+const hex2rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const rgb2hex = a => '#' + a.map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+const mix = (a, b, t) => rgb2hex(hex2rgb(a).map((v, i) => v + (hex2rgb(b)[i] - v) * t));
+const lum = h => { const [r, g, b] = hex2rgb(h).map(v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }); return .2126 * r + .7152 * g + .0722 * b; };
+
+function applyTheme() {
+  const r = document.documentElement.style;
+  const avg = (lum(S.c1) + lum(S.c2)) / 2;
+  r.setProperty('--c1', S.c1); r.setProperty('--c2', S.c2); r.setProperty('--ht', avg > .4 ? '#111' : '#fff');
+  r.setProperty('--tint', mix(S.c1, '#ffffff', .86)); r.setProperty('--bd', mix(S.c1, '#6b7280', .45));
+  r.setProperty('--ff', FONTS[S.font]); r.setProperty('--fs', S.size + 'pt');
+  $('#gradprev').style.background = `linear-gradient(90deg,${S.c1},${S.c2})`;
+  layoutPass();
+}
+/* make one gradient run across the whole table instead of restarting in each header cell */
+function layoutPass() {
+  const doc = $('#doc'); if (!doc) return;
+  doc.querySelectorAll('table.lp').forEach(t => {
+    const tw = t.offsetWidth;
+    t.querySelectorAll('.grad').forEach(c => { c.style.backgroundSize = tw + 'px 100%'; c.style.backgroundPosition = (-c.offsetLeft) + 'px 0'; });
+    t.classList.toggle('keep', t.offsetHeight <= PAGE_H);
+  });
+  fitMath(doc);
+  if (S.plan) { try { const pg = paginate(measure()); $('#pageInfo').textContent = `Preview — A4 portrait, margins 1.5 cm · about ${pg.length} page${pg.length === 1 ? '' : 's'}. Click any text to edit; formulas use LaTeX in $…$.`; } catch (e) { } }
+}
+function fitMath(root) {
+  root.querySelectorAll('mjx-container').forEach(c => {
+    c.style.fontSize = '';
+    const cell = c.closest('td,th'); if (!cell) return;
+    const cs = getComputedStyle(cell), avail = cell.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight), w = c.getBoundingClientRect().width;
+    if (avail > 20 && w > avail) c.style.fontSize = Math.max(50, Math.floor(avail / w * 98)) + '%';
+  });
+}
+async function typeset(root) {
+  if (!window.MathJax || !MathJax.typesetPromise) return;
+  try { await MathJax.startup.promise; await MathJax.typesetPromise([root]); } catch (e) { console.warn('MathJax', e); }
+  fitMath(root);
+}
+
+/* ---------------- editable cells ---------------- */
+const LABEL_RE = /^(Teacher:|Students:|Resource:|Language Objectives \(CLIL\):)/;
+const fmt = v => esc(v).replace(/^(Teacher:|Students:|Resource:|Language Objectives \(CLIL\):)/gm, '<b>$1</b>');
+function makeEditable(el, obj) {
+  el.contentEditable = 'true'; el.spellcheck = true; el.innerHTML = fmt(obj.v);
+  el.addEventListener('focus', () => { el.textContent = obj.v; });
+  el.addEventListener('blur', async () => {
+    obj.v = el.innerText.replace(/\u00a0/g, ' ').replace(/\n+$/, ''); el.innerHTML = fmt(obj.v);
+    await typeset(el); layoutPass();
+  });
+  el.addEventListener('paste', e => { e.preventDefault(); document.execCommand('insertText', false, (e.clipboardData || window.clipboardData).getData('text/plain')); });
+}
+function renderDoc() {
+  const doc = $('#doc'); doc.innerHTML = ''; $('#empty').style.display = S.plan ? 'none' : '';
+  if (!S.plan) return;
+  S.plan.blocks.forEach(b => {
+    if (b.kind === 'hdrimg') { if (!S.images.hdr) return; const d = document.createElement('div'); d.className = 'hdrimg'; d.innerHTML = '<img alt="Lesson plan header">'; d.firstChild.src = S.images.hdr; doc.appendChild(d); return; }
+    const t = document.createElement('table'); t.className = 'lp' + (b.newpage ? ' pb' : '');
+    const cg = document.createElement('colgroup'); b.w.forEach(w => { const c = document.createElement('col'); c.style.width = w + '%'; cg.appendChild(c); }); t.appendChild(cg);
+    const th = document.createElement('thead');
+    if (b.titleO) { const tr = th.insertRow(), c = document.createElement('th'); c.className = 'bar grad'; c.colSpan = b.w.length; makeEditable(c, b.titleO); tr.appendChild(c); }
+    if (b.head) { const tr = th.insertRow(); tr.className = 'colhead'; b.head.forEach(h => { const c = document.createElement('th'); c.className = 'grad'; makeEditable(c, h); tr.appendChild(c); }); }
+    if (th.rows.length) t.appendChild(th);
+    const tb = t.createTBody();
+    b.rows.forEach(r => { const tr = tb.insertRow(); r.forEach(c => {
+      const td = tr.insertCell(); if (c.span > 1) td.colSpan = c.span;
+      if (c.t === 'label') { td.className = 'lab'; td.textContent = c.v; }
+      else if (c.t === 'sig') { td.className = 'sig'; const src = S.images[c.key]; if (src) { const i = document.createElement('img'); i.alt = 'Signature'; i.src = src; td.appendChild(i); } else td.innerHTML = '<span class="ph">signature</span>'; }
+      else { if (c.t === 'lines') td.className = 'ruled'; makeEditable(td, c); }
+    }); });
+    doc.appendChild(t);
+  });
+  applyTheme(); typeset(doc).then(layoutPass);
+}
+
+/* ---------------- pagination (shared by the page counter and the PDF) ---------------- */
+function measure() {
+  return [...$('#doc').children].map(el => {
+    const r = el.getBoundingClientRect(), cs = getComputedStyle(el);
+    const o = { el, h: r.height, mb: parseFloat(cs.marginBottom) || 0, newpage: el.classList.contains('pb'), big: false, head: 0, rows: [] };
+    if (el.tagName === 'TABLE') {
+      const trs = [...el.tBodies[0].rows], tops = trs.map(tr => tr.getBoundingClientRect().top - r.top);
+      o.head = tops[0]; o.rows = tops.map((t, i) => ({ top: t, h: (i + 1 < tops.length ? tops[i + 1] : r.height) - t }));
+      o.big = r.height > PAGE_H;
+    }
+    return o;
+  });
+}
+function paginate(blocks) {
+  const pages = []; let cur = null, y = 0, gap = 0;
+  const np = () => { cur = []; pages.push(cur); y = 0; };
+  const put = (bi, y0, y1) => {
+    const last = cur[cur.length - 1], h = y1 - y0;
+    if (last && last.bi === bi && Math.abs(last.y1 - y0) < .01 && Math.abs(last.dy + (last.y1 - last.y0) - y) < .01) last.y1 = y1;
+    else cur.push({ bi, y0, y1, dy: y });
+    y += h;
+  };
+  blocks.forEach((b, bi) => {
+    if (!cur || (b.newpage && y > 0)) { np(); gap = 0; }
+    let g = y > 0 ? gap : 0;
+    if (!b.big) {
+      if (y > 0 && y + g + b.h > PAGE_H) { np(); g = 0; }
+      y += g; put(bi, 0, b.h);
+    } else {
+      const firstN = Math.min(3, b.rows.length); let need = b.head; for (let i = 0; i < firstN; i++) need += b.rows[i].h;
+      if (y > 0 && y + g + need > PAGE_H) { np(); g = 0; }   // only 1–2 rows would fit: move the table
+      y += g; put(bi, 0, b.head);
+      b.rows.forEach(r => {
+        if (r.h <= PAGE_H - b.head) {
+          if (y + r.h > PAGE_H) { np(); put(bi, 0, b.head); }
+          put(bi, r.top, r.top + r.h);
+        } else {                                              // a single row taller than a page: unavoidable slice
+          let a = r.top; const end = r.top + r.h;
+          while (a < end - .01) { if (PAGE_H - y < 40) { np(); put(bi, 0, b.head); } const take = Math.min(end - a, PAGE_H - y); put(bi, a, a + take); a += take; }
+        }
+      });
+    }
+    gap = b.mb;
+  });
+  return pages.filter(p => p.length);
+}
+
+/* ---------------- PDF ---------------- */
+async function capture(el) {
+  const svgs = [...el.querySelectorAll('mjx-container svg')], info = svgs.map(s => { const r = s.getBoundingClientRect(), cs = getComputedStyle(s); return { w: r.width, h: r.height, va: cs.verticalAlign, color: cs.color }; });
+  svgs.forEach((s, i) => s.setAttribute('data-sid', i));
+  try {
+    return await html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false,
+      onclone: doc => { doc.querySelectorAll('svg[data-sid]').forEach(s => {
+        const o = info[+s.getAttribute('data-sid')]; if (!o) return;
+        const c = s.cloneNode(true); c.setAttribute('width', o.w); c.setAttribute('height', o.h); c.removeAttribute('style');
+        if (!c.getAttribute('xmlns')) c.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        const str = new XMLSerializer().serializeToString(c).replace(/currentColor/g, o.color);
+        const img = doc.createElement('img'); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(str);
+        img.style.cssText = `width:${o.w}px;height:${o.h}px;vertical-align:${o.va};display:inline-block`; s.replaceWith(img); }); } });
+  } finally { svgs.forEach(s => s.removeAttribute('data-sid')); }
+}
+async function exportPDF() {
+  if (!S.plan) return; if (!window.html2canvas || !window.jspdf) { status('PDF libraries did not load (check the internet connection).', true); return; }
+  document.activeElement && document.activeElement.blur(); await typeset($('#doc')); layoutPass();
+  status('Building PDF…'); setBusy(true);
+  try {
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const blocks = measure(), pages = paginate(blocks), canv = [];
+    for (let i = 0; i < blocks.length; i++) { status(`Rendering block ${i + 1} of ${blocks.length}…`); canv.push(await capture(blocks[i].el)); }
+    const pdf = new jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }), mmpx = 25.4 / 96;
+    const footer = (S.plan.P.footer || '').trim();
+    pages.forEach((segs, pi) => {
+      if (pi) pdf.addPage();
+      segs.forEach(s => {
+        const cv = canv[s.bi], k = cv.height / blocks[s.bi].h, sy = Math.round(s.y0 * k), sh = Math.max(1, Math.round((s.y1 - s.y0) * k));
+        const tmp = document.createElement('canvas'); tmp.width = cv.width; tmp.height = sh;
+        const cx = tmp.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, tmp.width, sh); cx.drawImage(cv, 0, sy, cv.width, sh, 0, 0, cv.width, sh);
+        pdf.addImage(tmp.toDataURL('image/jpeg', 0.95), 'JPEG', 15, 15 + s.dy * mmpx, cv.width / k * mmpx, sh / k * mmpx);
+      });
+      pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8); pdf.setTextColor(90);
+      if (footer) pdf.text(footer, 15, 289.5);
+      pdf.text(`Page ${pi + 1} of ${pages.length}`, 195, 289.5, { align: 'right' });
+    });
+    pdf.save(fileBase() + '.pdf'); status(`PDF saved (${pages.length} pages).`);
+  } catch (e) { console.error(e); status('PDF export failed: ' + e.message, true); } finally { setBusy(false); }
+}
+
+/* ---------------- DOCX ---------------- */
+const fileBase = () => 'Lesson_Plan_' + (S.plan.P.level) + '_' + (S.plan.P.dateStr || 'date').replace(/[^0-9a-z]+/gi, '-');
+async function exportDOCX() {
+  if (!S.plan) return; const D = window.docx; if (!D) { status('DOCX library did not load (check the internet connection).', true); return; }
+  document.activeElement && document.activeElement.blur(); setBusy(true); status('Building DOCX…');
+  try {
+    const { Document, Packer, Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, WidthType, ShadingType, BorderStyle, Footer, PageNumber, TabStopType, ExternalHyperlink, TableLayoutType, AlignmentType, VerticalAlign } = D;
+    const P = S.plan.P, pt = S.size, fontPx = pt * 96 / 72, exPx = fontPx * 0.45, CW = 10204, fam = S.font;
+    const hc = lum(mix(S.c1, S.c2, .5)) > .4 ? '111111' : 'FFFFFF', bd = { style: BorderStyle.SINGLE, size: 4, color: '8D99AB' };
+    const borders = { top: bd, bottom: bd, left: bd, right: bd };
+    const cache = new Map(), dim = {};
+    const loadImg = src => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
+    async function mathPng(latex) {
+      if (cache.has(latex)) return cache.get(latex);
+      let out = null;
+      try {
+        await MathJax.startup.promise;
+        const svg = MathJax.tex2svg(latex, { display: false }).querySelector('svg');
+        const w = parseFloat(svg.getAttribute('width')) * exPx, h = parseFloat(svg.getAttribute('height')) * exPx, va = parseFloat((svg.style.verticalAlign || '0')) * exPx;
+        svg.setAttribute('width', w); svg.setAttribute('height', h); svg.removeAttribute('style'); svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        const str = new XMLSerializer().serializeToString(svg).replace(/currentColor/g, '#000000');
+        const img = await loadImg('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(str));
+        const c = document.createElement('canvas'); c.width = Math.ceil(w * 4); c.height = Math.ceil(h * 4); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+        out = { data: new Uint8Array(await blob.arrayBuffer()), w, h, va };
+      } catch (e) { console.warn('math image failed', latex, e); }
+      cache.set(latex, out); return out;
+    }
+    async function dataImg(src, maxW, maxH) {
+      const i = await loadImg(src), r = Math.min(maxW / i.naturalWidth, maxH / i.naturalHeight, 1), type = /png/i.test(src.slice(0, 20)) ? 'png' : /gif/i.test(src.slice(0, 20)) ? 'gif' : 'jpg';
+      const c = document.createElement('canvas'); c.width = i.naturalWidth; c.height = i.naturalHeight; const cx = c.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, c.width, c.height); cx.drawImage(i, 0, 0);
+      const blob = await new Promise(res => c.toBlob(res, 'image/png'));
+      return new ImageRun({ data: new Uint8Array(await blob.arrayBuffer()), type: 'png', transformation: { width: Math.round(i.naturalWidth * r), height: Math.round(i.naturalHeight * r) } });
+    }
+    async function lineRuns(line, o) {
+      if (/^https?:\/\/\S+$/.test(line)) return [new ExternalHyperlink({ link: line, children: [new TextRun({ text: line, color: '0563C1', underline: {}, size: o.size })] })];
+      const runs = []; let rest = line; const m = line.match(LABEL_RE);
+      if (m) { runs.push(new TextRun({ text: m[1], bold: true, color: o.color, size: o.size })); rest = line.slice(m[1].length); }
+      for (const tok of rest.split(/(\$[^$]+\$)/)) {
+        if (!tok) continue;
+        if (/^\$[^$]+\$$/.test(tok)) {
+          const mp = await mathPng(tok.slice(1, -1));
+          if (mp) { const sc = Math.min(1, o.maxW / mp.w); const opt = { data: mp.data, type: 'png', transformation: { width: Math.max(1, Math.round(mp.w * sc)), height: Math.max(1, Math.round(mp.h * sc)) } };
+            if (Math.abs(mp.va) > 0.5) opt.position = String(Math.round(mp.va * sc * 1.5)); runs.push(new ImageRun(opt)); }
+          else runs.push(new TextRun({ text: tok.slice(1, -1), italics: true, color: o.color, size: o.size }));
+        } else runs.push(new TextRun({ text: tok, bold: o.bold, color: o.color, size: o.size }));
+      }
+      return runs;
+    }
+    const para = (children, o = {}) => new Paragraph({ children, keepNext: !!o.keepNext, keepLines: true, alignment: o.align, spacing: { line: 276, before: 0, after: 0 }, border: o.border });
+    const sz = pt * 2;
+
+    const children = [];
+    const tinyBreak = () => new Paragraph({ pageBreakBefore: true, spacing: { before: 0, after: 0, line: 20, lineRule: 'exact' }, children: [] });
+    const blocks = S.plan.blocks; let first = true;
+    for (let bi = 0; bi < blocks.length; bi++) {
+      const b = blocks[bi];
+      if (!first) { if (b.newpage) children.push(tinyBreak()); else { children.push(para([new TextRun({ text: '', size: sz })])); children.push(para([new TextRun({ text: '', size: sz })])); } }
+      first = false;
+      if (b.kind === 'hdrimg') { if (S.images.hdr) children.push(para([await dataImg(S.images.hdr, 680, 150)])); else { first = true; } continue; }
+      const ncol = b.w.length, tw = b.w.map(w => Math.round(CW * w / 100)); tw[ncol - 1] += CW - tw.reduce((a, c) => a + c, 0);
+      const hasHead = !!(b.titleO || b.head), nHead = (b.titleO ? 1 : 0) + (b.head ? 1 : 0);
+      const small = b.small !== undefined ? b.small : null;
+      const rowsOut = [];
+      const keepRow = (ri, total) => (!bigTable(b)) ? ri < total - 1 : ri < nHead + 2;
+      let ri = 0; const total = nHead + b.rows.length;
+      if (b.titleO) { rowsOut.push(new TableRow({ tableHeader: true, cantSplit: true, children: [new TableCell({ columnSpan: ncol, width: { size: CW, type: WidthType.DXA }, borders, shading: { type: ShadingType.CLEAR, fill: S.c1.slice(1), color: 'auto' }, margins: { top: 50, bottom: 50, left: 100, right: 100 },
+        children: [para(await lineRuns(b.titleO.v.split('\n')[0], { color: hc, bold: true, size: sz, maxW: 640 }), { keepNext: true })] })] })); ri++; }
+      if (b.head) { let x = 0; const cells = []; for (let c = 0; c < ncol; c++) { const mid = (x + tw[c] / 2) / CW; x += tw[c];
+        const ps = []; for (const ln of b.head[c].v.split('\n')) ps.push(para(await lineRuns(ln, { color: hc, bold: true, size: sz, maxW: tw[c] / 15 - 12 }), { keepNext: true }));
+        cells.push(new TableCell({ width: { size: tw[c], type: WidthType.DXA }, borders, shading: { type: ShadingType.CLEAR, fill: mix(S.c1, S.c2, mid).slice(1), color: 'auto' }, margins: { top: 50, bottom: 50, left: 100, right: 100 }, children: ps })); }
+        rowsOut.push(new TableRow({ tableHeader: true, cantSplit: true, children: cells })); ri++; }
+      for (const r of b.rows) {
+        const cells = []; let c = 0;
+        for (const cell of r) {
+          const span = cell.span || 1; let w = 0; for (let k = 0; k < span; k++) w += tw[c + k]; c += span;
+          const kn = keepRow(ri, total), maxW = w / 15 - 12, ps = [];
+          if (cell.t === 'sig') { const src = S.images[cell.key]; ps.push(para(src ? [await dataImg(src, 170, 70)] : [new TextRun({ text: '', size: sz })], { align: AlignmentType.CENTER, keepNext: kn })); }
+          else if (cell.t === 'lines') {
+            const ls = cell.v ? cell.v.split('\n') : []; const n = Math.max(10, ls.length);
+            for (let k = 0; k < n; k++) ps.push(new Paragraph({ keepLines: true, keepNext: kn, spacing: { line: 460, lineRule: 'exact', before: 0, after: 0 }, border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: '9FB0C7', space: 1 } }, children: ls[k] ? await lineRuns(ls[k], { color: '000000', size: sz, maxW }) : [] }));
+          } else {
+            const isLab = cell.t === 'label';
+            for (const ln of String(cell.v).split('\n')) ps.push(para(await lineRuns(ln, { color: '000000', bold: isLab, size: sz, maxW }), { keepNext: kn }));
+          }
+          cells.push(new TableCell({ columnSpan: span, width: { size: w, type: WidthType.DXA }, borders, verticalAlign: cell.t === 'sig' ? VerticalAlign.CENTER : VerticalAlign.TOP,
+            shading: cell.t === 'label' ? { type: ShadingType.CLEAR, fill: mix(S.c1, '#ffffff', .86).slice(1), color: 'auto' } : undefined, margins: { top: 50, bottom: 50, left: 100, right: 100 }, children: ps }));
+        }
+        rowsOut.push(new TableRow({ cantSplit: true, height: cells.length && r[0].t === 'sig' ? { value: 1100, rule: 'atLeast' } : undefined, children: cells })); ri++;
+      }
+      children.push(new Table({ width: { size: CW, type: WidthType.DXA }, columnWidths: tw, layout: TableLayoutType.FIXED, rows: rowsOut }));
+    }
+    children.push(new Paragraph({ spacing: { before: 0, after: 0, line: 20, lineRule: 'exact' }, children: [] }));
+    const footerTxt = (P.footer || '').trim();
+    const doc = new Document({ creator: P.teacher, title: 'Lesson Plan',
+      styles: { default: { document: { run: { font: fam, size: sz }, paragraph: { spacing: { line: 276, before: 0, after: 0 } } } } },
+      sections: [{ properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 851, right: 851, bottom: 851, left: 851, footer: 400, header: 400 } } },
+        footers: { default: new Footer({ children: [new Paragraph({ tabStops: [{ type: TabStopType.RIGHT, position: CW }], children: [new TextRun({ text: footerTxt, size: 16, color: '5A667A' }), new TextRun({ children: ['\tPage ', PageNumber.CURRENT, ' of ', PageNumber.TOTAL_PAGES], size: 16, color: '5A667A' })] })] }) },
+        children }] });
+    saveBlob(await Packer.toBlob(doc), fileBase() + '.docx'); status('DOCX saved. Header gradient is exported as per-cell solid colours (Word tables have no gradient fill).');
+  } catch (e) { console.error(e); status('DOCX export failed: ' + e.message, true); } finally { setBusy(false); }
+}
+function bigTable(b) { return b.rows.length > 12; }
+function saveBlob(blob, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
+
+/* ---------------- Print ---------------- */
+function doPrint() {
+  if (!S.plan) return; document.activeElement && document.activeElement.blur(); layoutPass();
+  let st = $('#printFooter'); if (!st) { st = document.createElement('style'); st.id = 'printFooter'; document.head.appendChild(st); }
+  const t = (S.plan.P.footer || '').replace(/["\\\n]/g, ' ');
+  st.textContent = `@page{@bottom-left{content:"${t}";font:8pt Arial,sans-serif;color:#5a667a}@bottom-right{content:"Page " counter(page) " of " counter(pages);font:8pt Arial,sans-serif;color:#5a667a}}`;
+  window.print();
+}
+function setBusy(b) { ['#btnGen', '#btnPdf', '#btnDocx', '#btnPrint'].forEach(s => { $(s).disabled = b || (s !== '#btnGen' && !S.plan); }); }
+
+/* ---------------- checklist ---------------- */
+const findTopic = id => DATA[S.level].topics.find(t => t.id === id);
+const findSub = id => { for (const t of DATA[S.level].topics) { const s = t.subs.find(x => x.id === id); if (s) return s; } };
+function selSub(s) { const sel = S.sel[S.level]; sel.s.add(s.id); s.objs.forEach(o => sel.o.add(o.uid)); }
+function deselSub(s) { const sel = S.sel[S.level]; sel.s.delete(s.id); s.objs.forEach(o => sel.o.delete(o.uid)); }
+function renderChecklist(focusKey) {
+  const L = DATA[S.level], sel = S.sel[S.level], box = $('#checklist');
+  const allT = L.topics.length && L.topics.every(t => sel.t.has(t.id) && t.subs.every(s => sel.s.has(s.id)));
+  let h = `<label class="chk"><input type="checkbox" data-act="all" ${allT ? 'checked' : ''} ${L.topics.length ? '' : 'disabled'}> <b>Select all topics</b></label>`;
+  if (!L.topics.length) h += `<p class="hint">No topics yet for this level. Use “Add my own topic, subtopic or objective” below.</p>`;
+  L.topics.forEach(t => {
+    const on = sel.t.has(t.id);
+    h += `<div class="topic"><div class="trow"><label class="chk"><input type="checkbox" data-act="t" data-id="${esc(t.id)}" ${on ? 'checked' : ''}> <span><b>Topic ${esc(t.id)}</b> – ${esc(t.name)}</span></label>${t.custom ? `<button type="button" class="x" data-act="delt" data-id="${esc(t.id)}" aria-label="Remove topic">×</button>` : ''}</div>`;
+    if (on) {
+      const allS = t.subs.length && t.subs.every(s => sel.s.has(s.id));
+      h += `<div class="subs"><label class="chk"><input type="checkbox" data-act="allsubs" data-id="${esc(t.id)}" ${allS ? 'checked' : ''} ${t.subs.length ? '' : 'disabled'}> <i>Select all subtopics</i></label>`;
+      t.subs.forEach(s => {
+        const son = sel.s.has(s.id);
+        h += `<div><div class="trow"><label class="chk"><input type="checkbox" data-act="s" data-id="${esc(s.id)}" ${son ? 'checked' : ''}> <span>${esc(s.id)} ${esc(s.name)}</span></label>${s.custom ? `<button type="button" class="x" data-act="dels" data-id="${esc(s.id)}" aria-label="Remove subtopic">×</button>` : ''}</div>`;
+        if (son) {
+          const allO = s.objs.length && s.objs.every(o => sel.o.has(o.uid));
+          h += `<div class="objs"><label class="chk"><input type="checkbox" data-act="allobjs" data-id="${esc(s.id)}" ${allO ? 'checked' : ''} ${s.objs.length ? '' : 'disabled'}> <i>Select all objectives</i></label>`;
+          s.objs.forEach(o => { h += `<div class="trow"><label class="chk"><input type="checkbox" data-act="o" data-id="${esc(o.uid)}" ${sel.o.has(o.uid) ? 'checked' : ''}> <span><code>${esc(o.code)}</code> ${esc(o.text)}</span></label>${o.custom ? `<button type="button" class="x" data-act="delo" data-id="${esc(o.uid)}" data-s="${esc(s.id)}" aria-label="Remove objective">×</button>` : ''}</div>`; });
+          if (!s.objs.length) h += `<p class="hint">No objectives yet — add one below.</p>`;
+          h += '</div>';
+        }
+        h += '</div>';
+      });
+      if (!t.subs.length) h += `<p class="hint">No subtopics yet — add one below.</p>`;
+      h += '</div>';
+    }
+    h += '</div>';
+  });
+  box.innerHTML = h;
+  const nt = sel.t.size, ns = sel.s.size, no = sel.o.size;
+  $('#selSummary').textContent = `Selected: ${nt} topic${nt === 1 ? '' : 's'} · ${ns} subtopic${ns === 1 ? '' : 's'} · ${no} objective${no === 1 ? '' : 's'}`;
+  if (focusKey) { const el = box.querySelector(`[data-act="${focusKey[0]}"]${focusKey[1] ? `[data-id="${CSS.escape(focusKey[1])}"]` : ''}`); if (el) el.focus(); }
+  fillSelects();
+}
+function fillSelects() {
+  const L = DATA[S.level];
+  $('#subTopicSel').innerHTML = L.topics.map(t => `<option value="${esc(t.id)}">Topic ${esc(t.id)} – ${esc(t.name)}</option>`).join('') || '<option value="">(add a topic first)</option>';
+  $('#objSubSel').innerHTML = L.topics.flatMap(t => t.subs.map(s => `<option value="${esc(s.id)}">${esc(s.id)} ${esc(s.name)}</option>`)).join('') || '<option value="">(add a subtopic first)</option>';
+}
+$('#checklist').addEventListener('change', e => {
+  const el = e.target, a = el.dataset.act, id = el.dataset.id, on = el.checked, L = DATA[S.level], sel = S.sel[S.level]; if (!a) return;
+  if (a === 'all') L.topics.forEach(t => { if (on) { sel.t.add(t.id); t.subs.forEach(selSub); } else { sel.t.delete(t.id); t.subs.forEach(deselSub); } });
+  else if (a === 't') { if (on) sel.t.add(id); else { sel.t.delete(id); findTopic(id).subs.forEach(deselSub); } }
+  else if (a === 'allsubs') findTopic(id).subs.forEach(s => on ? selSub(s) : deselSub(s));
+  else if (a === 's') { const s = findSub(id); on ? selSub(s) : deselSub(s); }
+  else if (a === 'allobjs') findSub(id).objs.forEach(o => on ? sel.o.add(o.uid) : sel.o.delete(o.uid));
+  else if (a === 'o') on ? sel.o.add(id) : sel.o.delete(id);
+  renderChecklist([a, id]);
+});
+$('#checklist').addEventListener('click', e => {
+  const b = e.target.closest('button[data-act]'); if (!b) return; const a = b.dataset.act, id = b.dataset.id, L = DATA[S.level], sel = S.sel[S.level];
+  if (a === 'delt') { const i = L.topics.findIndex(t => t.id === id); L.topics[i].subs.forEach(deselSub); sel.t.delete(id); L.topics.splice(i, 1); }
+  if (a === 'dels') { const t = L.topics.find(t => t.subs.some(s => s.id === id)); const s = findSub(id); deselSub(s); t.subs.splice(t.subs.indexOf(s), 1); }
+  if (a === 'delo') { const s = findSub(b.dataset.s); sel.o.delete(id); s.objs.splice(s.objs.findIndex(o => o.uid === id), 1); }
+  renderChecklist();
+});
+const uid = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+$('#addTopic').onclick = () => { const n = $('#newTopic').value.trim(); if (!n) return status('Enter a topic name.', true);
+  const L = DATA[S.level]; let k = L.topics.length + 1; while (L.topics.some(t => t.id === 'C' + k)) k++;
+  L.topics.push({ id: 'C' + k, name: n, kw: [], subs: [], custom: true }); $('#newTopic').value = ''; renderChecklist(); status('Topic added.'); };
+$('#addSub').onclick = () => { const t = findTopic($('#subTopicSel').value), n = $('#newSub').value.trim(); if (!t) return status('Choose a topic first.', true); if (!n) return status('Enter a subtopic name.', true);
+  let k = t.subs.length + 1; while (t.subs.some(s => s.id === `${t.id}.${k}`)) k++;
+  t.subs.push({ id: `${t.id}.${k}`, name: n, f: $('#newSubF').value.trim(), q: $('#newSubQ').value.trim(), objs: [], custom: true });
+  ['#newSub', '#newSubF', '#newSubQ'].forEach(s => $(s).value = ''); renderChecklist(); status('Subtopic added.'); };
+$('#addObj').onclick = () => { const s = findSub($('#objSubSel').value), c = $('#newObjCode').value.trim(), x = $('#newObjText').value.trim(); if (!s) return status('Choose a subtopic first.', true); if (!x) return status('Enter the objective text.', true);
+  s.objs.push({ uid: uid(), code: c || '–', text: x, custom: true }); $('#newObjCode').value = ''; $('#newObjText').value = ''; renderChecklist(); status('Objective added.'); };
+
+/* ---------------- uploads, resources ---------------- */
+$$('input[data-img]').forEach(inp => inp.addEventListener('change', () => {
+  const f = inp.files[0], k = inp.dataset.img, prev = $('#prev-' + k); if (!f) return;
+  if (!/^image\//.test(f.type)) { status('Please choose an image file (PNG, JPG…).', true); inp.value = ''; return; }
+  const r = new FileReader(); r.onload = () => { S.images[k] = r.result; prev.innerHTML = `<img alt="Preview"><button type="button" class="x" aria-label="Remove image">×</button>`; prev.firstChild.src = r.result;
+    prev.querySelector('button').onclick = () => { S.images[k] = ''; prev.innerHTML = ''; inp.value = ''; if (S.plan) renderDoc(); }; if (S.plan) renderDoc(); }; r.readAsDataURL(f);
+}));
+function renderRes(kind) { const arr = kind === 'tr' ? S.teacherRes : S.studentAct, ul = $('#' + kind + 'List'); ul.innerHTML = '';
+  arr.forEach((r, i) => { const li = document.createElement('li'); li.innerHTML = `<span>${r.kind === 'link' ? '🔗' : '📄'} ${esc(r.name)}</span><button type="button" class="x" aria-label="Remove">×</button>`; li.querySelector('button').onclick = () => { arr.splice(i, 1); renderRes(kind); }; ul.appendChild(li); }); }
+function hookRes(kind) {
+  const arr = () => kind === 'tr' ? S.teacherRes : S.studentAct;
+  $('#' + kind + 'File').addEventListener('change', e => { [...e.target.files].forEach(f => arr().push({ kind: 'file', name: f.name })); e.target.value = ''; renderRes(kind); });
+  $('#' + kind + 'Add').onclick = () => { const v = $('#' + kind + 'Link').value.trim(); if (!/^https?:\/\/\S+\.\S+/.test(v)) return status('Enter a full link starting with http:// or https://', true);
+    arr().push({ kind: 'link', name: v, url: v }); $('#' + kind + 'Link').value = ''; renderRes(kind); };
+}
+hookRes('tr'); hookRes('sa');
+
+/* ---------------- generate ---------------- */
+function selectedItems() {
+  const sel = S.sel[S.level], out = [];
+  DATA[S.level].topics.forEach(t => t.subs.forEach(s => { if (sel.s.has(s.id)) { const objs = s.objs.filter(o => sel.o.has(o.uid)); if (objs.length) out.push({ topic: t, sub: s, objs }); } }));
+  return out;
+}
+const val = id => $('#' + id).value.trim();
+const fmtISO = v => { const m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[3]}/${m[2]}/${m[1]}` : ''; };
+function collect() { return { level: S.level, teacher: val('teacher'), hod: val('hod'), principal: val('principal'), D: +$('#duration').value, N: +$('#meetings').value, dateStr: val('date'),
+  hodDate: fmtISO($('#hodDate').value), prDate: fmtISO($('#prDate').value), year: val('year'), dept: val('dept'), syllabus: val('syllabus'), aos: val('aos'), footer: val('footer'), otherRes: $('#other').value,
+  teacherRes: S.teacherRes.slice(), studentAct: S.studentAct.slice(), items: selectedItems(), hasHdr: true }; }
+function validate(P) {
+  const e = [], sel = S.sel[S.level], L = DATA[S.level];
+  if (!P.teacher) e.push(['teacher', 'Enter the teacher name.']);
+  if (!P.hod) e.push(['hod', 'Enter the Head of Department name.']);
+  if (!P.principal) e.push(['principal', 'Enter the principal name.']);
+  if (!P.dateStr) e.push(['date', 'Enter a date or a date range.']);
+  else { const d = parseDateInput(P.dateStr); if (!d) e.push(['date', 'Date format must be dd/mm/yyyy or "dd/mm/yyyy to dd/mm/yyyy".']); else if (d.end < d.start) e.push(['date', 'The end date is before the start date.']); }
+  if (!L.topics.length) e.push(['checklist', `There are no topics for ${L.short} yet. Add at least one topic, subtopic and objective.`]);
+  else {
+    L.topics.forEach(t => { if (sel.t.has(t.id) && !t.subs.some(s => sel.s.has(s.id))) e.push(['checklist', `Topic ${t.id}: no subtopic selected.`]); });
+    L.topics.forEach(t => t.subs.forEach(s => { if (sel.s.has(s.id) && !s.objs.some(o => sel.o.has(o.uid))) e.push(['checklist', `Subtopic ${s.id}: no objective selected.`]); }));
+    if (!P.items.length && !e.some(x => x[0] === 'checklist')) e.push(['checklist', 'Select at least one topic, subtopic and objective.']);
+  }
+  return e;
+}
+function showErrors(list) { const box = $('#errors'); $$('[aria-invalid]').forEach(x => x.removeAttribute('aria-invalid'));
+  if (!list.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+  box.style.display = 'block'; box.innerHTML = '<b>Please fix the following:</b><ul>' + list.map(x => `<li>${esc(x[1])}</li>`).join('') + '</ul>';
+  list.forEach(x => { const el = $('#' + x[0]); if (el && x[0] !== 'checklist') el.setAttribute('aria-invalid', 'true'); });
+  const f = $('#' + list[0][0]); if (f) { f.scrollIntoView({ block: 'center' }); f.focus && f.focus(); } }
+async function generate() {
+  const P = collect(), errs = validate(P); showErrors(errs); if (errs.length) { status('Cannot generate yet — see the messages above.', true); return; }
+  if (S.plan && !confirm('Generating again replaces any text you edited in the current plan. Continue?')) return;
+  const nObj = P.items.reduce((a, i) => a + i.objs.length, 0), per = nObj / P.N;
+  S.plan = buildPlan(P); renderDoc(); setBusy(false);
+  let msg = `Lesson plan generated: ${P.items.length} subtopic(s) over ${P.N} meeting(s). Click any text to edit.`;
+  if (per > 8) msg += ' Note: many objectives per meeting — consider more meetings.';
+  if (!window.MathJax || !MathJax.typesetPromise) msg += ' (MathJax has not loaded yet; formulas will render when it does.)';
+  status(msg);
+}
+
+/* ---------------- init ---------------- */
+function setLevel(l) { S.level = l; const L = DATA[l]; $('#year').value = L.year; $('#syllabus').value = L.syllabus; $('#aos').value = L.aos; renderChecklist(); }
+$('#level').onchange = e => setLevel(e.target.value);
+$('#meetings').innerHTML = Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}"${i === 1 ? ' selected' : ''}>${i + 1}</option>`).join('');
+['c1', 'c2'].forEach(id => $('#' + id).addEventListener('input', e => { S[id] = e.target.value; applyTheme(); }));
+$('#font').onchange = e => { S.font = e.target.value; applyTheme(); };
+$('#size').onchange = e => { S.size = +e.target.value; applyTheme(); };
+$('#btnGen').onclick = generate; $('#btnPdf').onclick = exportPDF; $('#btnDocx').onclick = exportDOCX; $('#btnPrint').onclick = doPrint;
+if (window.flatpickr) flatpickr('#date', { mode: 'range', dateFormat: 'd/m/Y', allowInput: true, locale: { rangeSeparator: ' to ' } });
+window.addEventListener('resize', () => { if (S.plan) layoutPass(); });
+window.addEventListener('beforeprint', () => { layoutPass(); });
+setLevel('IGCSE'); applyTheme(); setBusy(false);
+if (!window.MathJax) status('Tip: MathJax could not be found — check the internet connection.', true);
+})();
+</script>
+</body>
+</html>
